@@ -4,8 +4,9 @@ export default clerkMiddleware();
 
 export const config = {
   matcher: [
-    // This regex ensures Clerk runs on EVERY page and EVERY API call
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // This runs Clerk on absolutely every single request
+    '/((?!_next|.*\\..*).*)',
+    '/',
     '/(api|trpc)(.*)',
   ],
 };
