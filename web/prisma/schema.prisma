@@ -16,12 +16,12 @@ model User {
 }
 
 model Audit {
-  id          String   @id @default(cuid())
-  createdAt   DateTime @default(now())
-  repoUrl     String
-  xpScore     Int
-  summary     String
-  status      String   @default("VERIFIED")
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id])
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  repoUrl   String
+  xpScore   Int
+  summary   String
+  status    String   @default("VERIFIED")
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
 }
