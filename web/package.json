@@ -2,12 +2,12 @@
   "name": "forge-web",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
+ "scripts": {
   "dev": "next dev",
-  "build": "next build",
+  "build": "prisma generate && next build",
   "start": "next start",
   "lint": "next lint",
-  "postinstall": "prisma generate" 
+  "postinstall": "prisma generate"
 },
   "dependencies": {
     "@clerk/nextjs": "^6.36.5",
