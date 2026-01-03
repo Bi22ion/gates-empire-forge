@@ -1,13 +1,15 @@
-﻿import { auth } from "@clerk/nextjs/server";
+﻿import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma"; 
 
 export async function POST(req: Request) {
   console.log("--- AUDIT START ---");
   try {
-    // 1. Authenticate user
+    // 1. Authenticate user via Clerk
     const { userId } = await auth();
-    if (!userId) {
+    const clerkUser = await currentUser();
+
+    if (!userId || !clerkUser) {
       console.error("AUTH ERROR: No userId found");
       return NextResponse.json({ error: "Please sign in first" }, { status: 401 });
     }
@@ -21,7 +23,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Repository URL is required" }, { status: 400 });
     }
 
-    // 3. AI Backend Call (Railway)
+    // 3. Ensure User exists in Supabase (The Fix)
+    // This prevents "Foreign Key Constraint" errors
+    try {
+      await prisma.user.upsert({
+        where: { id: userId },
+        update: {
+          username: clerkUser.username || clerkUser.firstName || "Explorer",
+        },
+        create: {
+          id: userId,
+          username: clerkUser.username || clerkUser.firstName || "Explorer",
+          email: clerkUser.emailAddresses[0].emailAddress,
+          totalXp: 0,
+        },
+      });
+      console.log("USER SYNCED SUCCESSFULLY");
+    } catch (userError: any) {
+      console.error("USER SYNC ERROR:", userError.message);
+      // We continue even if sync fails, as long as the user exists
+    }
+
+    // 4. AI Backend Call (Railway)
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://gates-empire-forge-production.up.railway.app";
     console.log(`CALLING AI BACKEND: ${apiUrl}/audit`);
     
@@ -43,15 +66,14 @@ export async function POST(req: Request) {
     const aiData = await aiResponse.json();
     console.log("AI DATA RECEIVED:", JSON.stringify(aiData));
 
-    // 4. Save to Database (Prisma)
-    // Using a try-catch specifically for the DB save to catch Prisma errors
+    // 5. Save Audit to Database
     try {
       const newAudit = await prisma.audit.create({
         data: {
           userId: userId,
           repoUrl: repoUrl,
           xpScore: aiData?.xp_score ?? 88, 
-          summary: aiData?.summary ?? "Verified by Gates Empire AI",
+          summary: aiData?.summary ?? "Verified by Forge AI",
           status: "VERIFIED",
         },
       });
