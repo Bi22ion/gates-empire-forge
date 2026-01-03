@@ -1,5 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // This line is the fix: it tells Prisma to support both your PC and Vercel
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -8,11 +10,11 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  email     String   @unique
-  totalXp   Int      @default(0)
-  audits    Audit[]
+  id       String  @id @default(cuid())
+  username String  @unique
+  email    String  @unique
+  totalXp  Int     @default(0)
+  audits   Audit[]
 }
 
 model Audit {
@@ -23,5 +25,6 @@ model Audit {
   summary   String
   status    String   @default("VERIFIED")
   userId    String?
+  // Relation linking the audit to the specific user
   user      User?    @relation(fields: [userId], references: [id])
 }
